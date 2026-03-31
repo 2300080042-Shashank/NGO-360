@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiDollarSign } from 'react-icons/fi';
 
+const API = "https://ngo-360.onrender.com";
+
 const DonationsPage = () => {
   const [donations, setDonations] = useState([]);
   const [amount, setAmount] = useState('');
@@ -16,7 +18,7 @@ const DonationsPage = () => {
   const fetchDonations = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/donations', {
+      const res = await axios.get(`${API}/api/donations`, {
         headers: { 'x-auth-token': token }
       });
       setDonations(res.data);
@@ -29,7 +31,7 @@ const DonationsPage = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/donations', { amount: Number(amount), projectId }, {
+      await axios.post(`${API}/api/donations`, { amount: Number(amount), projectId }, {
         headers: { 'x-auth-token': token }
       });
       setAmount('');

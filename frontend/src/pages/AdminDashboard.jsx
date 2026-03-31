@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiHeart, FiCheckSquare, FiDollarSign } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
+const API = "https://ngo-360.onrender.com";
+
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/dashboard/stats', {
+        const res = await axios.get(`${API}/api/dashboard/stats`, {
           headers: { 'x-auth-token': token }
         });
         setStats(res.data);

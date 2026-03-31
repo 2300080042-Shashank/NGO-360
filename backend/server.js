@@ -7,7 +7,10 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "https://ngo-360.vercel.app",
+  credentials: true
+}));
 
 // DB Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ngo360')

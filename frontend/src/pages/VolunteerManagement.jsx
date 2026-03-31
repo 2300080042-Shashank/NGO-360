@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiPlus } from 'react-icons/fi';
 
+const API = "https://ngo-360.onrender.com";
+
 const VolunteerManagement = () => {
   const [tasks, setTasks] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
@@ -18,8 +20,8 @@ const VolunteerManagement = () => {
       const headers = { 'x-auth-token': token };
       
       const [tasksRes, volRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/tasks', { headers }),
-        axios.get('http://localhost:5000/api/volunteers', { headers })
+        axios.get(`${API}/api/tasks`, { headers }),
+        axios.get(`${API}/api/volunteers`, { headers })
       ]);
       
       setTasks(tasksRes.data);
@@ -33,7 +35,7 @@ const VolunteerManagement = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/tasks', newTask, {
+      await axios.post(`${API}/api/tasks`, newTask, {
         headers: { 'x-auth-token': token }
       });
       setShowTaskModal(false);
@@ -47,7 +49,7 @@ const VolunteerManagement = () => {
   const updateTaskStatus = async (taskId, status) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/tasks/${taskId}`, { status }, {
+      await axios.put(`${API}/api/tasks/${taskId}`, { status }, {
         headers: { 'x-auth-token': token }
       });
       fetchData();
