@@ -10,6 +10,8 @@ const VolunteerManagement = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', assignedTo: '' });
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -19,13 +21,18 @@ const VolunteerManagement = () => {
       const token = localStorage.getItem('token');
       const headers = { 'x-auth-token': token };
       
-      const [tasksRes, volRes] = await Promise.all([
-        axios.get(`${API}/api/tasks`, { headers }),
-        axios.get(`${API}/api/volunteers`, { headers })
-      ]);
-      
-      setTasks(tasksRes.data);
-      setVolunteers(volRes.data);
+      if (user.role === 'admin') {
+        const [tasksRes, volRes] = await Promise.all([
+          axios.get(`${API}/api/tasks`, { headers }),
+          axios.get(`${API}/api/volunteers`, { headers })
+        ]);
+        setTasks(tasksRes.data);
+        setVolunteers(volRes.data);
+      } else {
+        const tasksRes = await axios.get(`${API}/api/tasks`, { headers });
+        setTasks(tasksRes.data);
+        setVolunteers([]);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -62,18 +69,20 @@ const VolunteerManagement = () => {
     <div className="animate-fade-in" style={{ padding: '0 20px' }}>
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Volunteer Management</h1>
-          <p className="text-secondary mt-2">Manage volunteers and assign operations tasks.</p>
+          <h1 className="text-3xl font-bold">{user.role === 'admin' ? 'Volunteer Management' : 'My Tasks'}</h1>
+          <p className="text-secondary mt-2">{user.role === 'admin' ? 'Manage volunteers and assign operations tasks.' : 'View and update your assigned tasks.'}</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowTaskModal(true)}>
-          <FiPlus /> Assign Task
-        </button>
+        {user.role === 'admin' && (
+          <button className="btn btn-primary" onClick={() => setShowTaskModal(true)}>
+            <FiPlus /> Assign Task
+          </button>
+        )}
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: user.role === 'admin' ? '2fr 1fr' : '1fr', gap: '24px' }}>
         {/* Task List */}
         <div className="glass-panel" style={{ padding: '24px' }}>
-          <h3 className="text-xl font-bold mb-6">Recent Tasks</h3>
+          <h3 className="text-xl font-bold mb-6">{user.role === 'admin' ? 'Recent Tasks' : 'My Assigned Tasks'}</h3>
           <div className="flex-col gap-4">
             {tasks.map(task => (
               <div key={task._id} className="glass-card flex justify-between items-center">
@@ -111,31 +120,33 @@ const VolunteerManagement = () => {
         </div>
 
         {/* Volunteers List */}
-        <div className="glass-panel" style={{ padding: '24px' }}>
-          <h3 className="text-xl font-bold mb-6">Active Volunteers</h3>
-          <div className="flex-col gap-4">
-            {volunteers.map(vol => (
-              <div key={vol._id} className="glass-card">
-                <div className="flex items-center gap-4">
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                    {vol.userId.name.charAt(0)}
+        {user.role === 'admin' && (
+          <div className="glass-panel" style={{ padding: '24px' }}>
+            <h3 className="text-xl font-bold mb-6">Active Volunteers</h3>
+            <div className="flex-col gap-4">
+              {volunteers.map(vol => (
+                <div key={vol._id} className="glass-card">
+                  <div className="flex items-center gap-4">
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                      {vol.userId.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{vol.userId.name}</h4>
+                      <p className="text-xs text-secondary">{vol.userId.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">{vol.userId.name}</h4>
-                    <p className="text-xs text-secondary">{vol.userId.email}</p>
-                  </div>
+                  {vol.skills && vol.skills.length > 0 && (
+                    <div className="mt-4 flex gap-2 flex-wrap">
+                      {vol.skills.map((skill, idx) => (
+                        <span key={idx} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>{skill}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {vol.skills && vol.skills.length > 0 && (
-                  <div className="mt-4 flex gap-2 flex-wrap">
-                    {vol.skills.map((skill, idx) => (
-                      <span key={idx} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>{skill}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Task Modal */}

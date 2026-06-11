@@ -4,10 +4,16 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get all donations
+// Get donations
 router.get('/', auth, async (req, res) => {
   try {
-    const donations = await Donation.find().populate('donorId', ['name', 'email']).sort({ date: -1 });
+    let query = {};
+    if (req.user.role === 'donor') {
+      query.donorId = req.user.id;
+    } else if (req.user.role === 'volunteer') {
+      return res.status(403).json({ msg: 'Access Denied: Volunteers cannot view donations.' });
+    }
+    const donations = await Donation.find(query).populate('donorId', ['name', 'email']).sort({ date: -1 });
     res.json(donations);
   } catch (err) {
     console.error(err.message);
@@ -17,6 +23,10 @@ router.get('/', auth, async (req, res) => {
 
 // Create a donation
 router.post('/', auth, async (req, res) => {
+  if (req.user.role === 'volunteer') {
+    return res.status(403).json({ msg: 'Access Denied: Volunteers cannot make donations.' });
+  }
+
   const { amount, projectId } = req.body;
 
   try {

@@ -5,8 +5,12 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get all volunteers (Admin only conceptually, but auth required)
+// Get all volunteers (Admin only)
 router.get('/', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ msg: 'Access Denied: Only admins can view volunteer lists.' });
+  }
+
   try {
     const volunteers = await Volunteer.find().populate('userId', ['name', 'email', 'phone']).populate('assignedTasks');
     res.json(volunteers);

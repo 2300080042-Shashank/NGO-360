@@ -8,7 +8,11 @@ const router = express.Router();
 // Get all tasks
 router.get('/', auth, async (req, res) => {
   try {
-    const tasks = await Task.find().populate('assignedTo', ['name', 'email']).sort({ createdAt: -1 });
+    let query = {};
+    if (req.user.role === 'volunteer') {
+      query.assignedTo = req.user.id;
+    }
+    const tasks = await Task.find(query).populate('assignedTo', ['name', 'email']).sort({ createdAt: -1 });
     res.json(tasks);
   } catch (err) {
     console.error(err.message);
@@ -18,6 +22,10 @@ router.get('/', auth, async (req, res) => {
 
 // Create task
 router.post('/', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ msg: 'Access Denied: Only Admin can create tasks.' });
+  }
+
   const { title, description, assignedTo, deadline } = req.body;
 
   try {
@@ -43,6 +51,15 @@ router.put('/:id', auth, async (req, res) => {
   try {
     let task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ msg: 'Task not found' });
+
+    // Role check
+    if (req.user.role === 'volunteer') {
+      if (!task.assignedTo || task.assignedTo.toString() !== req.user.id) {
+        return res.status(403).json({ msg: 'Access Denied: You can only update tasks assigned to you.' });
+      }
+    } else if (req.user.role === 'donor') {
+      return res.status(403).json({ msg: 'Access Denied: Donors cannot update tasks.' });
+    }
 
     task = await Task.findByIdAndUpdate(req.params.id, { $set: { status } }, { new: true });
     res.json(task);

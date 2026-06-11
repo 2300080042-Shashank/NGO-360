@@ -29,16 +29,18 @@ const Sidebar = ({ role }) => {
           {(role === 'admin' || role === 'volunteer') && (
             <li>
               <NavLink to="/volunteers" className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
-                <FiUsers /> Volunteers
+                <FiUsers /> {role === 'admin' ? 'Volunteers' : 'My Tasks'}
               </NavLink>
             </li>
           )}
           
-          <li>
-            <NavLink to="/donations" className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
-              <FiHeart /> Donations
-            </NavLink>
-          </li>
+          {role !== 'volunteer' && (
+            <li>
+              <NavLink to="/donations" className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
+                <FiHeart /> Donations
+              </NavLink>
+            </li>
+          )}
         </ul>
       </nav>
 
