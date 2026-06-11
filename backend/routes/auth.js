@@ -36,12 +36,15 @@ router.post('/register', async (req, res) => {
     // Return JWT
     const payload = { user: { id: user.id, role: user.role, name: user.name } };
     jwt.sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey12345', { expiresIn: 360000 }, (err, token) => {
-      if (err) throw err;
+      if (err) {
+        console.error("JWT Sign Error:", err);
+        return res.status(500).json({ msg: 'Error generating token' });
+      }
       res.json({ token, user: { id: user.id, name: user.name, role: user.role, email: user.email } });
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error("Signup Error:", err.stack);
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 
@@ -58,12 +61,15 @@ router.post('/login', async (req, res) => {
 
     const payload = { user: { id: user.id, role: user.role, name: user.name } };
     jwt.sign(payload, process.env.JWT_SECRET || 'supersecretjwtkey12345', { expiresIn: 360000 }, (err, token) => {
-      if (err) throw err;
+      if (err) {
+        console.error("JWT Sign Error:", err);
+        return res.status(500).json({ msg: 'Error generating token' });
+      }
       res.json({ token, user: { id: user.id, name: user.name, role: user.role, email: user.email } });
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error("Login Error:", err.stack);
+    res.status(500).json({ msg: 'Server error', error: err.message });
   }
 });
 

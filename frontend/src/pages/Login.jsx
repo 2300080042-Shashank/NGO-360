@@ -20,7 +20,8 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.msg || 'An error occurred');
+      console.error('Login error:', err, err.response?.data);
+      setError(err.response?.data?.msg || err.message || 'An error occurred');
     }
   };
 
