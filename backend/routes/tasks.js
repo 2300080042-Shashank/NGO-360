@@ -12,6 +12,19 @@ router.get('/', auth, async (req, res) => {
     if (req.user.role === 'volunteer') {
       query.assignedTo = req.user.id;
     }
+
+    if (req.query.title) {
+      query.title = { $regex: req.query.title, $options: 'i' };
+    }
+
+    if (req.query.status) {
+      let statusQuery = req.query.status;
+      if (statusQuery === 'In Progress') {
+        statusQuery = 'In-progress';
+      }
+      query.status = statusQuery;
+    }
+
     const tasks = await Task.find(query).populate('assignedTo', ['name', 'email']).sort({ createdAt: -1 });
     res.json(tasks);
   } catch (err) {

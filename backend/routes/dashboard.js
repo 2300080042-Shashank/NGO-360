@@ -11,6 +11,8 @@ router.get('/stats', auth, async (req, res) => {
     if (req.user.role === 'admin') {
       const donorsCount = await User.countDocuments({ role: 'donor' });
       const volunteersCount = await User.countDocuments({ role: 'volunteer' });
+      const tasksCount = await Task.countDocuments();
+      const donationsCount = await Donation.countDocuments();
       
       const donations = await Donation.find();
       const totalFunds = donations.reduce((acc, curr) => acc + curr.amount, 0);
@@ -21,6 +23,8 @@ router.get('/stats', auth, async (req, res) => {
         role: 'admin',
         totalDonors: donorsCount,
         totalVolunteers: volunteersCount,
+        totalTasks: tasksCount,
+        totalDonations: donationsCount,
         totalFunds,
         activeProjects: activeTasks // Conceptually mapping tasks to active projects for MVP
       });

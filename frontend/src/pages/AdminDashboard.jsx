@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiUsers, FiHeart, FiCheckSquare, FiDollarSign } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const API = "https://ngo-360.onrender.com";
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -97,6 +97,26 @@ const AdminDashboard = () => {
             <div>
               <p className="text-secondary text-sm font-semibold text-uppercase">Total Donors</p>
               <h3 className="text-3xl font-bold mt-1">{stats?.totalDonors || 0}</h3>
+            </div>
+          </div>
+
+          <div className="glass-card flex items-center gap-6 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/volunteers')}>
+            <div style={{ padding: '16px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', color: '#818cf8' }}>
+              <FiCheckSquare size={28} />
+            </div>
+            <div>
+              <p className="text-secondary text-sm font-semibold text-uppercase">Total Tasks</p>
+              <h3 className="text-3xl font-bold mt-1">{stats?.totalTasks || 0}</h3>
+            </div>
+          </div>
+
+          <div className="glass-card flex items-center gap-6 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/donations')}>
+            <div style={{ padding: '16px', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '12px', color: '#ec4899' }}>
+              <FiHeart size={28} />
+            </div>
+            <div>
+              <p className="text-secondary text-sm font-semibold text-uppercase">Total Donations</p>
+              <h3 className="text-3xl font-bold mt-1">{stats?.totalDonations || 0}</h3>
             </div>
           </div>
 

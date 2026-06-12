@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiHeart, FiCheckSquare, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiUsers, FiHeart, FiCheckSquare, FiLogOut, FiUser } from 'react-icons/fi';
 import './Sidebar.css';
 
 const Sidebar = ({ role }) => {
@@ -41,6 +41,12 @@ const Sidebar = ({ role }) => {
               </NavLink>
             </li>
           )}
+
+          <li>
+            <NavLink to="/profile" className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>
+              <FiUser /> Profile
+            </NavLink>
+          </li>
         </ul>
       </nav>
 

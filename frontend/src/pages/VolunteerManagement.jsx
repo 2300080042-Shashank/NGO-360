@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiPlus } from 'react-icons/fi';
 
-const API = "https://ngo-360.onrender.com";
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
 
 const VolunteerManagement = () => {
   const [tasks, setTasks] = useState([]);
@@ -10,26 +10,36 @@ const VolunteerManagement = () => {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', assignedTo: '' });
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  // Search and Filter States
+  const [taskSearch, setTaskSearch] = useState('');
+  const [taskStatus, setTaskStatus] = useState('');
+  const [volunteerName, setVolunteerName] = useState('');
+  const [volunteerSkill, setVolunteerSkill] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { 'x-auth-token': token };
-      
+
+      let tasksUrl = `${API}/api/tasks?`;
+      if (taskSearch) tasksUrl += `title=${encodeURIComponent(taskSearch)}&`;
+      if (taskStatus) tasksUrl += `status=${encodeURIComponent(taskStatus)}&`;
+
       if (user.role === 'admin') {
+        let volsUrl = `${API}/api/volunteers?`;
+        if (volunteerName) volsUrl += `name=${encodeURIComponent(volunteerName)}&`;
+        if (volunteerSkill) volsUrl += `skill=${encodeURIComponent(volunteerSkill)}&`;
+
         const [tasksRes, volRes] = await Promise.all([
-          axios.get(`${API}/api/tasks`, { headers }),
-          axios.get(`${API}/api/volunteers`, { headers })
+          axios.get(tasksUrl, { headers }),
+          axios.get(volsUrl, { headers })
         ]);
         setTasks(tasksRes.data);
         setVolunteers(volRes.data);
       } else {
-        const tasksRes = await axios.get(`${API}/api/tasks`, { headers });
+        const tasksRes = await axios.get(tasksUrl, { headers });
         setTasks(tasksRes.data);
         setVolunteers([]);
       }
@@ -37,6 +47,10 @@ const VolunteerManagement = () => {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [taskSearch, taskStatus, volunteerName, volunteerSkill]);
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
@@ -83,6 +97,28 @@ const VolunteerManagement = () => {
         {/* Task List */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h3 className="text-xl font-bold mb-6">{user.role === 'admin' ? 'Recent Tasks' : 'My Assigned Tasks'}</h3>
+          
+          {/* Tasks Filter Bar */}
+          <div className="flex gap-4 mb-6" style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <input 
+              type="text" 
+              placeholder="Search tasks by title..." 
+              value={taskSearch} 
+              onChange={e => setTaskSearch(e.target.value)} 
+              style={{ flex: 2, padding: '8px 12px', fontSize: '14px' }}
+            />
+            <select 
+              value={taskStatus} 
+              onChange={e => setTaskStatus(e.target.value)}
+              style={{ flex: 1, padding: '8px 12px', fontSize: '14px' }}
+            >
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
           <div className="flex-col gap-4">
             {tasks.map(task => (
               <div key={task._id} className="glass-card flex justify-between items-center">
@@ -123,16 +159,35 @@ const VolunteerManagement = () => {
         {user.role === 'admin' && (
           <div className="glass-panel" style={{ padding: '24px' }}>
             <h3 className="text-xl font-bold mb-6">Active Volunteers</h3>
+            
+            {/* Volunteers Filter Bar */}
+            <div className="flex-col gap-2 mb-6" style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <input 
+                type="text" 
+                placeholder="Search name..." 
+                value={volunteerName} 
+                onChange={e => setVolunteerName(e.target.value)} 
+                style={{ padding: '8px 12px', fontSize: '13px' }}
+              />
+              <input 
+                type="text" 
+                placeholder="Search skill..." 
+                value={volunteerSkill} 
+                onChange={e => setVolunteerSkill(e.target.value)} 
+                style={{ padding: '8px 12px', fontSize: '13px' }}
+              />
+            </div>
+
             <div className="flex-col gap-4">
               {volunteers.map(vol => (
                 <div key={vol._id} className="glass-card">
                   <div className="flex items-center gap-4">
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                      {vol.userId.name.charAt(0)}
+                      {vol.userId?.name?.charAt(0) || 'V'}
                     </div>
                     <div>
-                      <h4 className="font-semibold">{vol.userId.name}</h4>
-                      <p className="text-xs text-secondary">{vol.userId.email}</p>
+                      <h4 className="font-semibold">{vol.userId?.name || 'Volunteer'}</h4>
+                      <p className="text-xs text-secondary">{vol.userId?.email || ''}</p>
                     </div>
                   </div>
                   {vol.skills && vol.skills.length > 0 && (
@@ -144,6 +199,7 @@ const VolunteerManagement = () => {
                   )}
                 </div>
               ))}
+              {volunteers.length === 0 && <p className="text-secondary text-center py-8">No volunteers found.</p>}
             </div>
           </div>
         )}
@@ -168,7 +224,7 @@ const VolunteerManagement = () => {
                 <select value={newTask.assignedTo} onChange={e => setNewTask({...newTask, assignedTo: e.target.value})} required>
                   <option value="">Select Volunteer...</option>
                   {volunteers.map(vol => (
-                    <option key={vol.userId._id} value={vol.userId._id}>{vol.userId.name}</option>
+                    <option key={vol.userId?._id} value={vol.userId?._id}>{vol.userId?.name}</option>
                   ))}
                 </select>
               </div>

@@ -12,7 +12,22 @@ router.get('/', auth, async (req, res) => {
   }
 
   try {
-    const volunteers = await Volunteer.find().populate('userId', ['name', 'email', 'phone']).populate('assignedTasks');
+    const { name, skill } = req.query;
+    let volunteerQuery = {};
+
+    if (skill) {
+      volunteerQuery.skills = { $regex: skill, $options: 'i' };
+    }
+
+    let volunteers = await Volunteer.find(volunteerQuery)
+      .populate('userId', ['name', 'email', 'phone'])
+      .populate('assignedTasks');
+
+    if (name) {
+      const nameRegex = new RegExp(name, 'i');
+      volunteers = volunteers.filter(vol => vol.userId && nameRegex.test(vol.userId.name));
+    }
+
     res.json(volunteers);
   } catch (err) {
     console.error(err.message);

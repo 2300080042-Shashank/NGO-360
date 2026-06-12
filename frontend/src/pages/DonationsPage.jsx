@@ -2,23 +2,31 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiDollarSign } from 'react-icons/fi';
 
-const API = "https://ngo-360.onrender.com";
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
 
 const DonationsPage = () => {
   const [donations, setDonations] = useState([]);
   const [amount, setAmount] = useState('');
   const [projectId, setProjectId] = useState('');
   
+  // Search and Filter States
+  const [search, setSearch] = useState('');
+  const [project, setProject] = useState('');
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
+  
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-
-  useEffect(() => {
-    fetchDonations();
-  }, []);
 
   const fetchDonations = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API}/api/donations`, {
+      let url = `${API}/api/donations?`;
+      if (search) url += `search=${encodeURIComponent(search)}&`;
+      if (project) url += `project=${encodeURIComponent(project)}&`;
+      if (minAmount) url += `minAmount=${encodeURIComponent(minAmount)}&`;
+      if (maxAmount) url += `maxAmount=${encodeURIComponent(maxAmount)}&`;
+
+      const res = await axios.get(url, {
         headers: { 'x-auth-token': token }
       });
       setDonations(res.data);
@@ -26,6 +34,10 @@ const DonationsPage = () => {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    fetchDonations();
+  }, [search, project, minAmount, maxAmount]);
 
   const handleDonate = async (e) => {
     e.preventDefault();
@@ -93,6 +105,59 @@ const DonationsPage = () => {
         <div className="glass-panel" style={{ padding: '24px', gridColumn: user.role === 'donor' ? 'auto' : '1 / -1' }}>
           <h3 className="text-xl font-bold mb-6">Recent Donations</h3>
           
+          {/* Donations Filter Bar */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+            gap: '12px', 
+            marginBottom: '24px',
+            background: 'rgba(255,255,255,0.02)', 
+            padding: '16px', 
+            borderRadius: '12px', 
+            border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Search Project/Donor</label>
+              <input 
+                type="text" 
+                placeholder="Search..." 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                style={{ padding: '8px 12px', fontSize: '13px' }}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Project ID</label>
+              <input 
+                type="text" 
+                placeholder="Filter project..." 
+                value={project} 
+                onChange={e => setProject(e.target.value)} 
+                style={{ padding: '8px 12px', fontSize: '13px' }}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Min Amount ($)</label>
+              <input 
+                type="number" 
+                placeholder="Min..." 
+                value={minAmount} 
+                onChange={e => setMinAmount(e.target.value)} 
+                style={{ padding: '8px 12px', fontSize: '13px' }}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-secondary mb-1 block">Max Amount ($)</label>
+              <input 
+                type="number" 
+                placeholder="Max..." 
+                value={maxAmount} 
+                onChange={e => setMaxAmount(e.target.value)} 
+                style={{ padding: '8px 12px', fontSize: '13px' }}
+              />
+            </div>
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
