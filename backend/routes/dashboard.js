@@ -12,9 +12,9 @@ router.get('/stats', auth, async (req, res) => {
       const donorsCount = await User.countDocuments({ role: 'donor' });
       const volunteersCount = await User.countDocuments({ role: 'volunteer' });
       const tasksCount = await Task.countDocuments();
-      const donationsCount = await Donation.countDocuments();
+      const donationsCount = await Donation.countDocuments({ status: { $nin: ['Pending', 'Failed'] } });
       
-      const donations = await Donation.find();
+      const donations = await Donation.find({ status: { $nin: ['Pending', 'Failed'] } });
       const totalFunds = donations.reduce((acc, curr) => acc + curr.amount, 0);
 
       const activeTasks = await Task.countDocuments({ status: { $in: ['Pending', 'In-progress'] } });
@@ -41,10 +41,10 @@ router.get('/stats', auth, async (req, res) => {
         completedTasks
       });
     } else if (req.user.role === 'donor') {
-      const myDonations = await Donation.find({ donorId: req.user.id });
+      const myDonations = await Donation.find({ donorId: req.user.id, status: { $nin: ['Pending', 'Failed'] } });
       const myTotalDonations = myDonations.reduce((acc, curr) => acc + curr.amount, 0);
 
-      const donations = await Donation.find();
+      const donations = await Donation.find({ status: { $nin: ['Pending', 'Failed'] } });
       const totalFunds = donations.reduce((acc, curr) => acc + curr.amount, 0);
 
       const activeTasks = await Task.countDocuments({ status: { $in: ['Pending', 'In-progress'] } });

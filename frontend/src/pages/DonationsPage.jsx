@@ -39,18 +39,86 @@ const DonationsPage = () => {
     fetchDonations();
   }, [search, project, minAmount, maxAmount]);
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleDonate = async (e) => {
     e.preventDefault();
+    if (!amount || isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/api/donations`, { amount: Number(amount), projectId }, {
+      
+      // Step 1: Load Razorpay Checkout Script Dynamically
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        alert("Failed to load Razorpay Checkout SDK. Are you online?");
+        return;
+      }
+
+      // Step 2: Create order on the backend
+      const orderRes = await axios.post(`${API}/api/donations/razorpay-order`, {
+        amount: Number(amount),
+        projectId
+      }, {
         headers: { 'x-auth-token': token }
       });
-      setAmount('');
-      setProjectId('');
-      fetchDonations();
+
+      const { orderId, amount: orderAmount, currency, keyId } = orderRes.data;
+
+      // Step 3: Configure options and open Checkout
+      const options = {
+        key: keyId,
+        amount: orderAmount,
+        currency: currency,
+        name: "NGO360 Payments",
+        description: projectId ? `Donation for project: ${projectId}` : "General Donation to NGO360",
+        order_id: orderId,
+        handler: async function (response) {
+          try {
+            // Verify payment signature
+            await axios.post(`${API}/api/donations/razorpay-verify`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            }, {
+              headers: { 'x-auth-token': token }
+            });
+
+            alert(`Payment of ₹${amount} successful! Thank you.`);
+            setAmount('');
+            setProjectId('');
+            fetchDonations();
+          } catch (err) {
+            console.error(err);
+            alert("Payment signature verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: user.name,
+          email: user.email
+        },
+        theme: {
+          color: "#3b82f6"
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+
     } catch (err) {
       console.error(err);
+      alert(err.response?.data?.msg || "Failed to process payment. Make sure the server environment variables are set.");
     }
   };
 
@@ -75,13 +143,41 @@ const DonationsPage = () => {
             
             <form onSubmit={handleDonate} className="flex-col gap-4">
               <div>
-                <label className="text-sm font-semibold mb-2 block">Amount ($)</label>
+                <label className="text-sm font-semibold mb-2 block">Quick Select Amount</label>
+                <div className="flex gap-2 mb-4">
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    style={{ background: amount === '100' ? 'var(--accent)' : 'rgba(255,255,255,0.05)', flex: 1, padding: '8px', fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)' }}
+                    onClick={() => setAmount('100')}
+                  >
+                    ₹100
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    style={{ background: amount === '500' ? 'var(--accent)' : 'rgba(255,255,255,0.05)', flex: 1, padding: '8px', fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)' }}
+                    onClick={() => setAmount('500')}
+                  >
+                    ₹500
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn" 
+                    style={{ background: amount === '1000' ? 'var(--accent)' : 'rgba(255,255,255,0.05)', flex: 1, padding: '8px', fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)' }}
+                    onClick={() => setAmount('1000')}
+                  >
+                    ₹1000
+                  </button>
+                </div>
+
+                <label className="text-sm font-semibold mb-2 block">Or Enter Custom Amount (₹)</label>
                 <input 
                   type="number" 
                   min="1" 
                   value={amount} 
                   onChange={e => setAmount(e.target.value)} 
-                  placeholder="e.g. 100"
+                  placeholder="e.g. 2000"
                   required 
                 />
               </div>
@@ -137,7 +233,7 @@ const DonationsPage = () => {
               />
             </div>
             <div>
-              <label className="text-xs text-secondary mb-1 block">Min Amount ($)</label>
+              <label className="text-xs text-secondary mb-1 block">Min Amount (₹)</label>
               <input 
                 type="number" 
                 placeholder="Min..." 
@@ -147,7 +243,7 @@ const DonationsPage = () => {
               />
             </div>
             <div>
-              <label className="text-xs text-secondary mb-1 block">Max Amount ($)</label>
+              <label className="text-xs text-secondary mb-1 block">Max Amount (₹)</label>
               <input 
                 type="number" 
                 placeholder="Max..." 
@@ -166,6 +262,7 @@ const DonationsPage = () => {
                   <th style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: '600' }}>Amount</th>
                   <th style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: '600' }}>Project</th>
                   <th style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: '600' }}>Date</th>
+                  <th style={{ padding: '16px', color: 'var(--text-secondary)', fontWeight: '600' }}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -176,7 +273,7 @@ const DonationsPage = () => {
                       <div className="text-xs text-secondary">{donation.donorId?.email}</div>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <span className="text-success font-bold text-lg">${donation.amount}</span>
+                      <span className="text-success font-bold text-lg">₹{donation.amount}</span>
                     </td>
                     <td style={{ padding: '16px' }}>
                       {donation.projectId ? (
@@ -190,11 +287,22 @@ const DonationsPage = () => {
                     <td style={{ padding: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
                       {new Date(donation.date).toLocaleDateString()}
                     </td>
+                    <td style={{ padding: '16px' }}>
+                      <span style={{ 
+                        padding: '4px 10px', 
+                        borderRadius: '20px', 
+                        fontSize: '11px',
+                        background: donation.status === 'Successful' ? 'rgba(16, 185, 129, 0.2)' : donation.status === 'Pending' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                        color: donation.status === 'Successful' ? 'var(--success)' : donation.status === 'Pending' ? 'var(--warning)' : 'var(--danger)'
+                      }}>
+                        {donation.status || 'Successful'}
+                      </span>
+                    </td>
                   </tr>
                 ))}
                 {donations.length === 0 && (
                   <tr>
-                    <td colSpan="4" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                       No donations found.
                     </td>
                   </tr>

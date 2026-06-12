@@ -126,7 +126,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <p className="text-secondary text-sm font-semibold text-uppercase">Funds Raised</p>
-              <h3 className="text-3xl font-bold mt-1">${stats?.totalFunds || 0}</h3>
+              <h3 className="text-3xl font-bold mt-1">₹{stats?.totalFunds || 0}</h3>
             </div>
           </div>
 
@@ -261,7 +261,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <p className="text-secondary text-sm font-semibold text-uppercase">My Contributions</p>
-              <h3 className="text-3xl font-bold mt-1">${stats?.myTotalDonations || 0}</h3>
+              <h3 className="text-3xl font-bold mt-1">₹{stats?.myTotalDonations || 0}</h3>
             </div>
           </div>
 
@@ -271,7 +271,7 @@ const AdminDashboard = () => {
             </div>
             <div>
               <p className="text-secondary text-sm font-semibold text-uppercase">Total NGO Funds</p>
-              <h3 className="text-3xl font-bold mt-1">${stats?.totalFunds || 0}</h3>
+              <h3 className="text-3xl font-bold mt-1">₹{stats?.totalFunds || 0}</h3>
             </div>
           </div>
 
@@ -326,13 +326,14 @@ const AdminDashboard = () => {
                   <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '12px' }}>Amount</th>
                     <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '12px' }}>Project / Cause</th>
+                    <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '12px' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {donations.map((donation) => (
                     <tr key={donation._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                       <td style={{ padding: '12px 8px' }}>
-                        <span className="text-success font-bold">${donation.amount}</span>
+                        <span className="text-success font-bold">₹{donation.amount}</span>
                       </td>
                       <td style={{ padding: '12px 8px', fontSize: '13px' }}>
                         {donation.projectId ? (
@@ -342,6 +343,17 @@ const AdminDashboard = () => {
                         ) : (
                           <span className="text-secondary">General Fund</span>
                         )}
+                      </td>
+                      <td style={{ padding: '12px 8px' }}>
+                        <span style={{ 
+                          padding: '2px 8px', 
+                          borderRadius: '12px', 
+                          fontSize: '10px',
+                          background: donation.status === 'Successful' ? 'rgba(16, 185, 129, 0.2)' : donation.status === 'Pending' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                          color: donation.status === 'Successful' ? 'var(--success)' : donation.status === 'Pending' ? 'var(--warning)' : 'var(--danger)'
+                        }}>
+                          {donation.status || 'Successful'}
+                        </span>
                       </td>
                     </tr>
                   ))}
