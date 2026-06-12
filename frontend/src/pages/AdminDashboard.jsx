@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { FiUsers, FiHeart, FiCheckSquare, FiDollarSign, FiPlus, FiAlertCircle, FiTrendingUp } from 'react-icons/fi';
+import { FiUsers, FiHeart, FiCheckSquare, FiDollarSign, FiPlus, FiAlertCircle, FiTrendingUp, FiAward, FiMapPin, FiClock } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
@@ -9,6 +9,7 @@ const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' :
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [availableTasks, setAvailableTasks] = useState([]);
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -34,9 +35,19 @@ const AdminDashboard = () => {
       setStats(statsRes.data);
 
       if (user.role === 'volunteer') {
-        // Fetch tasks volunteer has joined
-        const tasksRes = await axios.get(`${API}/api/tasks?joined=true`, { headers });
-        setTasks(tasksRes.data);
+        const [joinedRes, availableRes] = await Promise.all([
+          axios.get(`${API}/api/tasks?joined=true`, { headers }),
+          axios.get(`${API}/api/tasks`, { headers })
+        ]);
+        setTasks(joinedRes.data);
+
+        // Filter out opportunities that the volunteer has already joined (or is assigned to)
+        const unjoined = availableRes.data.filter(task => {
+          const hasJoined = task.volunteers && task.volunteers.some(v => v._id === user.id || v === user.id);
+          const isAssigned = task.assignedTo && (task.assignedTo._id === user.id || task.assignedTo === user.id);
+          return !hasJoined && !isAssigned;
+        });
+        setAvailableTasks(unjoined);
       } else if (user.role === 'donor') {
         const [tasksRes, donationsRes] = await Promise.all([
           axios.get(`${API}/api/tasks?browse=true`), // Browse opportunities
@@ -65,6 +76,20 @@ const AdminDashboard = () => {
       fetchDashboardData();
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleRegister = async (taskId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/api/tasks/${taskId}/participate`, {}, {
+        headers: { 'x-auth-token': token }
+      });
+      alert('Successfully registered for the volunteer opportunity!');
+      fetchDashboardData();
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.msg || 'Error registering for opportunity.');
     }
   };
 
@@ -307,15 +332,71 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* My Tasks Section */}
+        {/* Available Opportunities Section */}
+        <div className="glass-panel mb-8" style={{ padding: '24px' }}>
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <FiAward className="text-accent" /> Available Opportunities
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            {availableTasks.map(task => (
+              <div key={task._id} className="glass-card flex-col" style={{ padding: '20px' }}>
+                <div className="card-body flex-1 flex-col">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="badge badge-accent">Opportunity</span>
+                    <span className={`badge ${task.status === 'Completed' ? 'badge-success' : 'badge-warning'}`}>{task.status}</span>
+                  </div>
+                  <h4 className="font-semibold text-base text-truncate" style={{ margin: '0 0 4px 0' }}>{task.title}</h4>
+                  {task.organizationId && (
+                    <p className="text-xs text-accent font-semibold mb-3">by {task.organizationId.name}</p>
+                  )}
+                  <p className="text-sm text-secondary line-clamp-3 mb-4" style={{ minHeight: '60px' }}>{task.description}</p>
+                  
+                  <div className="mt-auto flex-col gap-2 pt-3 text-xs text-secondary" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    {task.location && (
+                      <span className="flex items-center gap-1.5"><FiMapPin /> {task.location}</span>
+                    )}
+                    {task.date && (
+                      <span className="flex items-center gap-1.5"><FiClock /> {new Date(task.date).toLocaleDateString()}</span>
+                    )}
+                    <span className="flex items-center gap-1.5"><FiUsers /> {task.volunteers ? task.volunteers.length : 0} / {task.requiredVolunteers || 1} Joined</span>
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleRegister(task._id)} 
+                    className="btn btn-primary w-full mt-4"
+                  >
+                    Register
+                  </button>
+                </div>
+              </div>
+            ))}
+            {availableTasks.length === 0 && (
+              <p className="text-secondary py-6 text-center" style={{ gridColumn: '1 / -1' }}>No new available volunteer opportunities at the moment.</p>
+            )}
+          </div>
+        </div>
+
+        {/* My Joined Tasks Section */}
         <div className="glass-panel" style={{ padding: '24px' }}>
-          <h3 className="text-xl font-bold mb-6">My Joined & Assigned Tasks</h3>
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <FiCheckSquare className="text-success" /> My Joined Tasks
+          </h3>
           <div className="flex-col gap-4">
             {tasks.map(task => (
               <div key={task._id} className="glass-card flex justify-between items-center" style={{ padding: '18px 24px' }}>
                 <div>
-                  <h4 className="font-semibold text-lg">{task.title}</h4>
+                  <h4 className="font-semibold text-lg" style={{ margin: 0 }}>{task.title}</h4>
                   <p className="text-sm text-secondary mt-1">{task.description}</p>
+                  
+                  <div className="flex gap-4 mt-2 text-xs text-secondary">
+                    {task.location && (
+                      <span className="flex items-center gap-1"><FiMapPin /> {task.location}</span>
+                    )}
+                    {task.date && (
+                      <span className="flex items-center gap-1"><FiClock /> {new Date(task.date).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                  
                   {task.organizationId && <p className="text-xs text-accent mt-2 font-semibold">by {task.organizationId.name}</p>}
                 </div>
                 <div className="flex items-center gap-4">
@@ -340,7 +421,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
             ))}
-            {tasks.length === 0 && <p className="text-secondary text-center py-8">No tasks joined or assigned to you yet.</p>}
+            {tasks.length === 0 && <p className="text-secondary text-center py-8">No tasks joined yet. Register for available opportunities above!</p>}
           </div>
         </div>
       </div>
