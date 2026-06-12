@@ -149,11 +149,15 @@ const BrowseTasks = () => {
 
                     {hasJoined ? (
                       <button className="btn btn-success w-full mt-3" disabled style={{ opacity: 0.8, cursor: 'not-allowed' }}>
-                        <FiCheck /> Registered
+                        <FiCheck /> Joined
                       </button>
                     ) : isFull ? (
                       <button className="btn btn-secondary w-full mt-3" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
                         Opportunity Full
+                      </button>
+                    ) : token && user.role !== 'volunteer' ? (
+                      <button className="btn btn-secondary w-full mt-3" disabled style={{ opacity: 0.6 }} title="Only Volunteers can participate">
+                        Participate (Volunteers Only)
                       </button>
                     ) : (
                       <button 

@@ -47,26 +47,26 @@ router.get('/', async (req, res) => {
       query.status = statusQuery;
     }
 
-    // Role-based filtering if user is logged in
-    if (user && user.role === 'volunteer') {
-      const { browse, joined } = req.query;
-
-      if (joined === 'true') {
-        // Only return tasks the volunteer has joined or is assigned to
-        query.$or = [
-          { assignedTo: user.id },
-          { volunteers: user.id }
-        ];
-      } else if (browse === 'true') {
-        // Return tasks available to browse (exclude already joined if they want to browse new ones, or just show all)
-        // Let's show all tasks with organizationId populated
-        query.organizationId = { $exists: true };
+    // Role-based filtering and scoping
+    if (user && user.role === 'admin') {
+      // NGO Admin: see all tasks created by their organization
+      const org = await Organization.findOne({ createdBy: user.id });
+      if (org) {
+        query.organizationId = org._id;
       } else {
-        // Backward compatibility: default to return tasks assigned/joined
-        query.$or = [
-          { assignedTo: user.id },
-          { volunteers: user.id }
-        ];
+        return res.json([]);
+      }
+    } else if (user && user.role === 'volunteer' && req.query.joined === 'true') {
+      // Volunteer: return only tasks they joined or are assigned to
+      query.$or = [
+        { assignedTo: user.id },
+        { volunteers: user.id }
+      ];
+    } else {
+      // Guest or Volunteer browsing public opportunities: return all open/active opportunities
+      query.organizationId = { $exists: true };
+      if (!req.query.status) {
+        query.status = { $ne: 'Completed' };
       }
     }
 

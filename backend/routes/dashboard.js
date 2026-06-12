@@ -137,8 +137,8 @@ router.get('/stats', auth, async (req, res) => {
         $or: [{ assignedTo: req.user.id }, { volunteers: req.user.id }]
       });
       const pendingTasks = await Task.countDocuments({
-        $or: [{ assignedTo: req.user.id }, { volunteers: req.user.id }],
-        status: { $in: ['Pending', 'In-progress'] }
+        organizationId: { $exists: true },
+        status: { $ne: 'Completed' }
       });
       const completedTasks = await Task.countDocuments({
         $or: [{ assignedTo: req.user.id }, { volunteers: req.user.id }],

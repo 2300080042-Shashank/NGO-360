@@ -189,6 +189,12 @@ const VolunteerManagement = () => {
                       Assigned To: {task.assignedTo.name} ({task.assignedTo.email})
                     </p>
                   )}
+                  {task.volunteers && task.volunteers.length > 0 && (
+                    <div className="mt-2 text-xs" style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', display: 'inline-block' }}>
+                      <strong className="text-accent">Joined Volunteers:</strong>{' '}
+                      {task.volunteers.map(v => v.name).join(', ')}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-4">
