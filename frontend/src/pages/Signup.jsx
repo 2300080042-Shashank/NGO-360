@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Auth.css';
 
-const API = "https://ngo-360.onrender.com";
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
 
 const Signup = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'donor' });

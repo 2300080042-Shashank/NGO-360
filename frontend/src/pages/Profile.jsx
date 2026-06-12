@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FiUser, FiPhone, FiMail, FiKey, FiBriefcase, FiCalendar, FiEye, FiSettings } from 'react-icons/fi';
+import { FiUser, FiPhone, FiMail, FiKey, FiBriefcase, FiCalendar, FiEye, FiSettings, FiBriefcase as FiNgo } from 'react-icons/fi';
 
 const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
 
@@ -19,20 +19,32 @@ const Profile = () => {
     confirmPassword: ''
   });
 
-  const [allProfiles, setAllProfiles] = useState([]);
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  
   const [loading, setLoading] = useState(true);
-  const [profilesLoading, setProfilesLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
+
+  // Organization settings for NGO Admin
+  const [org, setOrg] = useState(null);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [orgForm, setOrgForm] = useState({
+    name: '',
+    logo: '',
+    coverImage: '',
+    description: '',
+    mission: '',
+    location: '',
+    contactEmail: '',
+    contactPhone: '',
+    website: ''
+  });
+  const [orgMessage, setOrgMessage] = useState({ type: '', text: '' });
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     fetchProfile();
     if (user.role === 'admin') {
-      fetchAllProfiles();
+      fetchMyOrganization();
     }
   }, []);
 
@@ -58,18 +70,33 @@ const Profile = () => {
     }
   };
 
-  const fetchAllProfiles = async () => {
-    setProfilesLoading(true);
+  const fetchMyOrganization = async () => {
+    setOrgLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`${API}/api/auth/profiles`, {
+      const res = await axios.get(`${API}/api/organizations/my`, {
         headers: { 'x-auth-token': token }
       });
-      setAllProfiles(res.data);
+      setOrg(res.data);
+      setOrgForm({
+        name: res.data.name || '',
+        logo: res.data.logo || '',
+        coverImage: res.data.coverImage || '',
+        description: res.data.description || '',
+        mission: res.data.mission || '',
+        location: res.data.location || '',
+        contactEmail: res.data.contactDetails?.email || '',
+        contactPhone: res.data.contactDetails?.phone || '',
+        website: res.data.contactDetails?.website || ''
+      });
     } catch (err) {
-      console.error(err);
+      // 404 is expected if they haven't set up an NGO yet
+      if (err.response?.status !== 404) {
+        console.error('Error fetching NGO details', err);
+      }
+      setOrg(null);
     } finally {
-      setProfilesLoading(false);
+      setOrgLoading(false);
     }
   };
 
@@ -98,16 +125,10 @@ const Profile = () => {
         availability: res.data.availability || ''
       }));
 
-      // Update name in localstorage so other components update
       const updatedUser = { ...user, name: res.data.name };
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      
-      // Refresh admin user list if admin
-      if (user.role === 'admin') {
-        fetchAllProfiles();
-      }
+      setMessage({ type: 'success', text: 'Profile details saved.' });
     } catch (err) {
       console.error(err);
       setMessage({ type: 'error', text: err.response?.data?.msg || 'Error updating profile.' });
@@ -135,10 +156,51 @@ const Profile = () => {
       });
 
       setPasswordForm({ newPassword: '', confirmPassword: '' });
-      setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
+      setPasswordMessage({ type: 'success', text: 'Password updated successfully!' });
     } catch (err) {
       console.error(err);
       setPasswordMessage({ type: 'error', text: err.response?.data?.msg || 'Error changing password.' });
+    }
+  };
+
+  const handleOrgSubmit = async (e) => {
+    e.preventDefault();
+    setOrgMessage({ type: '', text: '' });
+
+    const payload = {
+      name: orgForm.name,
+      logo: orgForm.logo || undefined,
+      coverImage: orgForm.coverImage || undefined,
+      description: orgForm.description,
+      mission: orgForm.mission,
+      location: orgForm.location,
+      contactDetails: {
+        email: orgForm.contactEmail,
+        phone: orgForm.contactPhone,
+        website: orgForm.website
+      }
+    };
+
+    try {
+      const token = localStorage.getItem('token');
+      if (org) {
+        // Update
+        const res = await axios.put(`${API}/api/organizations/${org._id}`, payload, {
+          headers: { 'x-auth-token': token }
+        });
+        setOrg(res.data);
+        setOrgMessage({ type: 'success', text: 'NGO Profile details updated successfully!' });
+      } else {
+        // Create
+        const res = await axios.post(`${API}/api/organizations`, payload, {
+          headers: { 'x-auth-token': token }
+        });
+        setOrg(res.data);
+        setOrgMessage({ type: 'success', text: 'NGO Profile created! You can now publish campaigns and tasks.' });
+      }
+    } catch (err) {
+      console.error(err);
+      setOrgMessage({ type: 'error', text: err.response?.data?.msg || 'Error saving organization details.' });
     }
   };
 
@@ -147,36 +209,36 @@ const Profile = () => {
   return (
     <div className="animate-fade-in" style={{ padding: '0 20px' }}>
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">Profile Settings</h1>
-        <p className="text-secondary mt-2">Manage your account credentials and personalization preferences.</p>
+        <h1 className="text-3xl font-bold">Profile & Settings</h1>
+        <p className="text-secondary mt-2">Manage your credentials, preferences, and organization listings.</p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: user.role === 'admin' ? '1.1fr 0.9fr' : '1.2fr 0.8fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: user.role === 'admin' ? '1fr 1fr' : '1.2fr 0.8fr', gap: '24px' }}>
         
-        {/* Profile Edit Panel */}
-        <div className="glass-panel" style={{ padding: '28px' }}>
-          <div className="flex items-center gap-3 mb-6" style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
-            <FiSettings size={22} className="text-accent" />
-            <h3 className="text-xl font-bold">Edit Personal Details</h3>
-          </div>
-
-          {message.text && (
-            <div style={{ 
-              padding: '12px 16px', 
-              borderRadius: '8px', 
-              marginBottom: '20px', 
-              background: message.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              color: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
-              border: `1px solid ${message.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
-            }}>
-              {message.text}
+        {/* Left Side: General Profile Details */}
+        <div className="flex-col gap-6">
+          <div className="glass-panel" style={{ padding: '28px' }}>
+            <div className="flex items-center gap-3 mb-6" style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
+              <FiUser size={22} className="text-accent" />
+              <h3 className="text-xl font-bold">Personal Account Settings</h3>
             </div>
-          )}
 
-          <form onSubmit={handleProfileUpdate} className="flex-col gap-4">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {message.text && (
+              <div style={{ 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                marginBottom: '20px', 
+                background: message.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                color: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
+                border: `1px solid ${message.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+              }}>
+                {message.text}
+              </div>
+            )}
+
+            <form onSubmit={handleProfileUpdate} className="flex-col gap-4">
               <div>
-                <label className="text-sm font-semibold mb-2 block">Full Name</label>
+                <label className="text-xs text-secondary font-semibold mb-2 block">Full Name</label>
                 <input 
                   type="text" 
                   value={profile.name} 
@@ -184,83 +246,69 @@ const Profile = () => {
                   required 
                 />
               </div>
+              
               <div>
-                <label className="text-sm font-semibold mb-2 block">Email (Non-editable)</label>
+                <label className="text-xs text-secondary font-semibold mb-2 block">Email (Non-editable)</label>
                 <input 
                   type="email" 
                   value={profile.email} 
                   disabled 
-                  style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                  style={{ opacity: 0.6 }}
                 />
               </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <label className="text-sm font-semibold mb-2 block">Phone Number</label>
+                <label className="text-xs text-secondary font-semibold mb-2 block">Phone Number</label>
                 <input 
                   type="text" 
                   value={profile.phone} 
                   onChange={e => setProfile({...profile, phone: e.target.value})} 
-                  placeholder="e.g. +1 555-0199"
+                  placeholder="+91 9999999999"
                 />
               </div>
-              <div>
-                <label className="text-sm font-semibold mb-2 block">Account Role</label>
-                <input 
-                  type="text" 
-                  value={profile.role.toUpperCase()} 
-                  disabled 
-                  style={{ opacity: 0.6, cursor: 'not-allowed' }}
-                />
-              </div>
-            </div>
 
-            {profile.role === 'volunteer' && (
-              <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: '16px', paddingTop: '16px' }}>
-                <h4 className="text-md font-semibold mb-4 text-accent">Volunteer Details</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '16px' }}>
-                  <div>
-                    <label className="text-sm font-semibold mb-2 block">Skills (Comma-separated)</label>
-                    <input 
-                      type="text" 
-                      value={Array.isArray(profile.skills) ? profile.skills.join(', ') : profile.skills} 
-                      onChange={e => setProfile({...profile, skills: e.target.value})}
-                      placeholder="e.g. Fundraising, Mentoring, Design"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold mb-2 block">Availability</label>
-                    <select 
-                      value={profile.availability} 
-                      onChange={e => setProfile({...profile, availability: e.target.value})}
-                    >
-                      <option value="">Select availability...</option>
-                      <option value="Weekends">Weekends</option>
-                      <option value="Evenings">Evenings</option>
-                      <option value="Full-time">Full-time</option>
-                      <option value="Part-time">Part-time</option>
-                      <option value="Flexible">Flexible</option>
-                    </select>
+              {profile.role === 'volunteer' && (
+                <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', marginTop: '8px' }}>
+                  <h4 className="text-sm font-semibold mb-4 text-accent">Volunteer Customizations</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <label className="text-xs text-secondary font-semibold mb-2 block">Skills (Comma-separated)</label>
+                      <input 
+                        type="text" 
+                        value={Array.isArray(profile.skills) ? profile.skills.join(', ') : profile.skills} 
+                        onChange={e => setProfile({...profile, skills: e.target.value})}
+                        placeholder="e.g. Cooking, Coding, Graphic Design"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-secondary font-semibold mb-2 block">Availability</label>
+                      <select 
+                        value={profile.availability} 
+                        onChange={e => setProfile({...profile, availability: e.target.value})}
+                      >
+                        <option value="">Select availability...</option>
+                        <option value="Weekends">Weekends</option>
+                        <option value="Evenings">Evenings</option>
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Flexible">Flexible</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <button type="submit" className="btn btn-primary mt-4 align-self-start" style={{ width: 'fit-content' }}>
-              Save Changes
-            </button>
-          </form>
-        </div>
+              <button type="submit" className="btn btn-primary mt-4" style={{ width: 'fit-content' }}>
+                Save Account Info
+              </button>
+            </form>
+          </div>
 
-        {/* Right side options: Password Change or Admin Profiles List */}
-        <div className="flex-col gap-6">
-          
-          {/* Security / Password Change */}
+          {/* Change Password Panel */}
           <div className="glass-panel" style={{ padding: '24px' }}>
             <div className="flex items-center gap-3 mb-6" style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
               <FiKey size={20} className="text-warning" />
-              <h3 className="text-lg font-bold">Change Password</h3>
+              <h3 className="text-lg font-bold">Change Account Password</h3>
             </div>
 
             {passwordMessage.text && (
@@ -269,9 +317,9 @@ const Profile = () => {
                 borderRadius: '8px', 
                 marginBottom: '16px', 
                 fontSize: '13px',
-                background: passwordMessage.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                background: passwordMessage.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
                 color: passwordMessage.type === 'success' ? 'var(--success)' : 'var(--danger)',
-                border: `1px solid ${passwordMessage.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                border: `1px solid ${passwordMessage.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
               }}>
                 {passwordMessage.text}
               </div>
@@ -279,7 +327,7 @@ const Profile = () => {
 
             <form onSubmit={handlePasswordChange} className="flex-col gap-4">
               <div>
-                <label className="text-sm font-semibold mb-2 block">New Password</label>
+                <label className="text-xs text-secondary font-semibold mb-2 block">New Password</label>
                 <input 
                   type="password" 
                   value={passwordForm.newPassword} 
@@ -289,143 +337,155 @@ const Profile = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold mb-2 block">Confirm New Password</label>
+                <label className="text-xs text-secondary font-semibold mb-2 block">Confirm New Password</label>
                 <input 
                   type="password" 
                   value={passwordForm.confirmPassword} 
                   onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})} 
-                  placeholder="Confirm password"
+                  placeholder="Verify new password"
                   required 
                 />
               </div>
-              <button type="submit" className="btn mt-2" style={{ background: 'rgba(245, 158, 11, 0.2)', color: 'var(--warning)', border: '1px solid rgba(245, 158, 11, 0.4)' }}>
+              <button type="submit" className="btn btn-secondary mt-2" style={{ width: 'fit-content' }}>
                 Update Password
               </button>
             </form>
           </div>
-
-          {/* Admin: View All User Profiles */}
-          {user.role === 'admin' && (
-            <div className="glass-panel" style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <div className="flex items-center gap-3 mb-6" style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
-                <FiUser size={20} className="text-success" />
-                <h3 className="text-lg font-bold">All User Profiles</h3>
-              </div>
-
-              {profilesLoading ? (
-                <p className="text-secondary text-sm">Loading all user profiles...</p>
-              ) : (
-                <div style={{ maxHeight: '250px', overflowY: 'auto', flex: 1 }} className="flex-col gap-3">
-                  {allProfiles.map(p => (
-                    <div 
-                      key={p._id} 
-                      className="glass-card flex justify-between items-center" 
-                      style={{ 
-                        padding: '12px 16px', 
-                        cursor: 'pointer', 
-                        border: selectedProfile?._id === p._id ? '1px solid var(--accent)' : '1px solid rgba(255, 255, 255, 0.05)',
-                        background: selectedProfile?._id === p._id ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)'
-                      }}
-                      onClick={() => setSelectedProfile(p)}
-                    >
-                      <div>
-                        <h4 className="font-semibold text-sm">{p.name}</h4>
-                        <p className="text-xs text-secondary">{p.email}</p>
-                      </div>
-                      <span style={{ 
-                        padding: '2px 8px', 
-                        borderRadius: '12px', 
-                        fontSize: '10px',
-                        background: p.role === 'admin' ? 'rgba(239, 68, 68, 0.15)' : p.role === 'volunteer' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                        color: p.role === 'admin' ? 'var(--danger)' : p.role === 'volunteer' ? 'var(--accent)' : 'var(--success)'
-                      }}>
-                        {p.role.toUpperCase()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
         </div>
+
+        {/* Right Side: Organization (NGO) Profile Onboarding/Edit (Admin Only) */}
+        {user.role === 'admin' && (
+          <div className="glass-panel" style={{ padding: '28px' }}>
+            <div className="flex items-center gap-3 mb-6" style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
+              <FiSettings size={22} className="text-success" />
+              <h3 className="text-xl font-bold">NGO Organization Profile</h3>
+            </div>
+
+            {orgLoading ? (
+              <p className="text-secondary">Loading NGO profile data...</p>
+            ) : (
+              <>
+                {orgMessage.text && (
+                  <div style={{ 
+                    padding: '12px 16px', 
+                    borderRadius: '8px', 
+                    marginBottom: '20px', 
+                    background: orgMessage.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                    color: orgMessage.type === 'success' ? 'var(--success)' : 'var(--danger)',
+                    border: `1px solid ${orgMessage.type === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                  }}>
+                    {orgMessage.text}
+                  </div>
+                )}
+
+                <form onSubmit={handleOrgSubmit} className="flex-col gap-4">
+                  <div>
+                    <label className="text-xs text-secondary font-semibold mb-2 block">NGO Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Green Earth Foundation" 
+                      value={orgForm.name} 
+                      onChange={e => setOrgForm({...orgForm, name: e.target.value})}
+                      required 
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div>
+                      <label className="text-xs text-secondary font-semibold mb-2 block">Logo URL</label>
+                      <input 
+                        type="url" 
+                        placeholder="Image URL" 
+                        value={orgForm.logo} 
+                        onChange={e => setOrgForm({...orgForm, logo: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-secondary font-semibold mb-2 block">Cover Image URL</label>
+                      <input 
+                        type="url" 
+                        placeholder="Image URL" 
+                        value={orgForm.coverImage} 
+                        onChange={e => setOrgForm({...orgForm, coverImage: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-secondary font-semibold mb-2 block">NGO Location</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Mumbai, Maharashtra" 
+                      value={orgForm.location} 
+                      onChange={e => setOrgForm({...orgForm, location: e.target.value})}
+                      required 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-secondary font-semibold mb-2 block">Mission Statement</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Bridging digital gaps for slum children." 
+                      value={orgForm.mission} 
+                      onChange={e => setOrgForm({...orgForm, mission: e.target.value})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-secondary font-semibold mb-2 block">Description</label>
+                    <textarea 
+                      rows="4" 
+                      placeholder="Give a brief summary of NGO work, goals, and history..." 
+                      value={orgForm.description} 
+                      onChange={e => setOrgForm({...orgForm, description: e.target.value})}
+                      required
+                    ></textarea>
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', marginTop: '8px' }}>
+                    <h4 className="text-sm font-semibold mb-4 text-accent">NGO Contact Info</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div>
+                        <label className="text-xs text-secondary font-semibold mb-2 block">Contact Email</label>
+                        <input 
+                          type="email" 
+                          placeholder="email@ngo.org" 
+                          value={orgForm.contactEmail} 
+                          onChange={e => setOrgForm({...orgForm, contactEmail: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-secondary font-semibold mb-2 block">Phone</label>
+                        <input 
+                          type="text" 
+                          placeholder="+91..." 
+                          value={orgForm.contactPhone} 
+                          onChange={e => setOrgForm({...orgForm, contactPhone: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="text-xs text-secondary font-semibold mb-2 block">Website URL</label>
+                      <input 
+                        type="text" 
+                        placeholder="www.ngo.org" 
+                        value={orgForm.website} 
+                        onChange={e => setOrgForm({...orgForm, website: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn btn-success mt-4">
+                    {org ? 'Save NGO Profile' : 'Register NGO'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        )}
 
       </div>
-
-      {/* Admin: View Selected Profile Read-only Modal/Panel */}
-      {user.role === 'admin' && selectedProfile && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '500px' }}>
-            <div className="flex justify-between items-center mb-6" style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>
-              <div className="flex items-center gap-3">
-                <FiEye size={22} className="text-accent" />
-                <h3 className="text-xl font-bold">User Profile Viewer</h3>
-              </div>
-              <span style={{ 
-                padding: '4px 10px', 
-                borderRadius: '12px', 
-                fontSize: '11px',
-                background: selectedProfile.role === 'admin' ? 'rgba(239, 68, 68, 0.2)' : selectedProfile.role === 'volunteer' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-                color: selectedProfile.role === 'admin' ? 'var(--danger)' : selectedProfile.role === 'volunteer' ? 'var(--accent)' : 'var(--success)'
-              }}>
-                {selectedProfile.role.toUpperCase()}
-              </span>
-            </div>
-
-            <div className="flex-col gap-4">
-              <div>
-                <span className="text-xs text-secondary block">Full Name</span>
-                <span className="text-base font-semibold">{selectedProfile.name}</span>
-              </div>
-              
-              <div>
-                <span className="text-xs text-secondary block">Email Address</span>
-                <span className="text-base font-semibold flex items-center gap-2">
-                  <FiMail size={14} className="text-secondary" /> {selectedProfile.email}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-xs text-secondary block">Phone Number</span>
-                <span className="text-base font-semibold flex items-center gap-2">
-                  <FiPhone size={14} className="text-secondary" /> {selectedProfile.phone || 'Not provided'}
-                </span>
-              </div>
-
-              {selectedProfile.role === 'volunteer' && (
-                <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '12px', marginTop: '6px' }} className="flex-col gap-3">
-                  <div>
-                    <span className="text-xs text-secondary block mb-1">Skills</span>
-                    {selectedProfile.skills && selectedProfile.skills.length > 0 ? (
-                      <div className="flex gap-2 flex-wrap">
-                        {selectedProfile.skills.map((skill, idx) => (
-                          <span key={idx} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-sm italic text-secondary">No skills listed</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-xs text-secondary block">Availability</span>
-                    <span className="text-sm font-semibold flex items-center gap-2 mt-1">
-                      <FiCalendar size={14} className="text-secondary" /> {selectedProfile.availability || 'Not provided'}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end mt-8">
-              <button className="btn" style={{ background: 'rgba(255,255,255,0.1)' }} onClick={() => setSelectedProfile(null)}>
-                Close Viewer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
