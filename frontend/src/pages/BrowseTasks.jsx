@@ -12,7 +12,8 @@ const BrowseTasks = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -24,10 +25,10 @@ const BrowseTasks = () => {
       if (search) url += `title=${encodeURIComponent(search)}&`;
       if (location) url += `location=${encodeURIComponent(location)}&`;
 
-      // Pass token if exists to let backend calculate roles or user status
       const headers = token ? { 'x-auth-token': token } : {};
       const res = await axios.get(url, { headers });
       setTasks(res.data);
+      setCurrentPage(1);
     } catch (err) {
       console.error('Error fetching volunteer tasks', err);
     } finally {
@@ -62,6 +63,9 @@ const BrowseTasks = () => {
       alert(err.response?.data?.msg || 'Error signing up for the volunteer task.');
     }
   };
+
+  const totalPages = Math.ceil(tasks.length / itemsPerPage);
+  const paginatedTasks = tasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="animate-fade-in" style={{ padding: '40px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
@@ -103,81 +107,112 @@ const BrowseTasks = () => {
       {loading ? (
         <div className="text-center py-12 text-secondary">Loading volunteer opportunities...</div>
       ) : (
-        <div className="responsive-grid-cards">
-          {tasks.map(task => {
-            const hasJoined = task.volunteers && task.volunteers.some(v => v._id === user.id || v === user.id);
-            const isFull = task.volunteers && task.volunteers.length >= (task.requiredVolunteers || 1);
-            
-            return (
-              <div key={task._id} className="glass-card flex-col">
-                <div className="card-body flex-1 flex-col">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="badge badge-accent">Volunteer Opportunity</span>
-                    <span className={`badge ${task.status === 'Completed' ? 'badge-success' : 'badge-warning'}`}>
-                      {task.status}
-                    </span>
-                  </div>
-                  
-                  <h3 className="text-lg font-bold mb-2 text-truncate">{task.title}</h3>
-                  {task.organizationId && (
-                    <p className="text-xs text-accent mb-3" style={{ fontWeight: '600' }}>
-                      by {task.organizationId.name}
-                    </p>
-                  )}
-                  <p className="text-sm text-secondary line-clamp-3 mb-4">{task.description}</p>
-                  
-                  <div className="mt-auto flex-col gap-2 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div className="flex items-center gap-2 text-xs text-secondary">
-                      <FiMapPin /> {task.location || 'Remote'}
-                    </div>
-                    {task.date && (
-                      <div className="flex items-center gap-2 text-xs text-secondary">
-                        <FiClock /> {new Date(task.date).toLocaleDateString()}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-xs text-secondary">
-                      <FiUsers /> {task.volunteers ? task.volunteers.length : 0} / {task.requiredVolunteers || 1} Volunteers Joined
+        <>
+          <div className="responsive-grid-cards">
+            {paginatedTasks.map(task => {
+              const hasJoined = task.volunteers && task.volunteers.some(v => v._id === user.id || v === user.id);
+              const isFull = task.volunteers && task.volunteers.length >= (task.requiredVolunteers || 1);
+              
+              return (
+                <div key={task._id} className="glass-card flex-col">
+                  <div className="card-body flex-1 flex-col">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="badge badge-accent">Volunteer Opportunity</span>
+                      <span className={`badge ${task.status === 'Completed' ? 'badge-success' : 'badge-warning'}`}>
+                        {task.status}
+                      </span>
                     </div>
                     
-                    {task.skillsNeeded && task.skillsNeeded.length > 0 && (
-                      <div className="flex gap-2 flex-wrap mt-2 mb-4">
-                        {task.skillsNeeded.map((skill, i) => (
-                          <span key={i} className="skill-chip">{skill}</span>
-                        ))}
+                    <h3 className="text-lg font-bold mb-2 text-truncate">{task.title}</h3>
+                    {task.organizationId && (
+                      <p className="text-xs text-accent mb-3" style={{ fontWeight: '600' }}>
+                        by {task.organizationId.name}
+                      </p>
+                    )}
+                    <p className="text-sm text-secondary line-clamp-3 mb-4">{task.description}</p>
+                    
+                    <div className="mt-auto flex-col gap-2 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="flex items-center gap-2 text-xs text-secondary">
+                        <FiMapPin /> {task.location || 'Remote'}
                       </div>
-                    )}
+                      {task.date && (
+                        <div className="flex items-center gap-2 text-xs text-secondary">
+                          <FiClock /> {new Date(task.date).toLocaleDateString()}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-xs text-secondary">
+                        <FiUsers /> {task.volunteers ? task.volunteers.length : 0} / {task.requiredVolunteers || 1} Volunteers Joined
+                      </div>
+                      
+                      {task.skillsNeeded && task.skillsNeeded.length > 0 && (
+                        <div className="flex gap-2 flex-wrap mt-2 mb-4">
+                          {task.skillsNeeded.map((skill, i) => (
+                            <span key={i} className="skill-chip">{skill}</span>
+                          ))}
+                        </div>
+                      )}
 
-                    {hasJoined ? (
-                      <button className="btn btn-success w-full mt-3" disabled style={{ opacity: 0.8, cursor: 'not-allowed' }}>
-                        <FiCheck /> Joined
-                      </button>
-                    ) : isFull ? (
-                      <button className="btn btn-secondary w-full mt-3" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-                        Opportunity Full
-                      </button>
-                    ) : token && user.role !== 'volunteer' ? (
-                      <button className="btn btn-secondary w-full mt-3" disabled style={{ opacity: 0.6 }} title="Only Volunteers can participate">
-                        Participate (Volunteers Only)
-                      </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleParticipate(task._id)} 
-                        className="btn btn-primary w-full mt-3"
-                      >
-                        Participate
-                      </button>
-                    )}
+                      {hasJoined ? (
+                        <button className="btn btn-success w-full mt-3" disabled style={{ opacity: 0.8, cursor: 'not-allowed' }}>
+                          <FiCheck /> Joined
+                        </button>
+                      ) : isFull ? (
+                        <button className="btn btn-secondary w-full mt-3" disabled style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                          Opportunity Full
+                        </button>
+                      ) : token && user.role !== 'volunteer' ? (
+                        <button className="btn btn-secondary w-full mt-3" disabled style={{ opacity: 0.6 }} title="Only Volunteers can participate">
+                          Participate (Volunteers Only)
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleParticipate(task._id)} 
+                          className="btn btn-primary w-full mt-3"
+                        >
+                          Participate
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+            {paginatedTasks.length === 0 && (
+              <div className="text-center py-12 text-secondary" style={{ gridColumn: '1 / -1' }}>
+                No volunteer opportunities match your search query.
               </div>
-            );
-          })}
-          {tasks.length === 0 && (
-            <div className="text-center py-12 text-secondary" style={{ gridColumn: '1 / -1' }}>
-              No volunteer opportunities match your search query.
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-12 gap-2 flex-wrap">
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button 
+                  key={i} 
+                  className={`btn btn-sm ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`} 
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

@@ -11,6 +11,8 @@ const BrowseNgos = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchNgos = async () => {
     setLoading(true);
@@ -21,6 +23,7 @@ const BrowseNgos = () => {
 
       const res = await axios.get(url);
       setNgos(res.data);
+      setCurrentPage(1);
     } catch (err) {
       console.error('Error fetching NGOs', err);
     } finally {
@@ -31,6 +34,9 @@ const BrowseNgos = () => {
   useEffect(() => {
     fetchNgos();
   }, [search, location]);
+
+  const totalPages = Math.ceil(ngos.length / itemsPerPage);
+  const paginatedNgos = ngos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="animate-fade-in" style={{ padding: '40px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
@@ -72,37 +78,68 @@ const BrowseNgos = () => {
       {loading ? (
         <div className="text-center py-12 text-secondary">Loading organizations list...</div>
       ) : (
-        <div className="responsive-grid-cards">
-          {ngos.map(ngo => (
-            <div key={ngo._id} className="glass-card flex-col">
-              <img src={ngo.coverImage} alt={ngo.name} className="card-img-top" />
-              <div className="card-body flex-col flex-1" style={{ position: 'relative' }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <img src={ngo.logo} alt="" className="ngo-mini-logo" style={{ border: '2px solid var(--accent)' }} />
-                  <div>
-                    <h3 className="text-lg font-bold" style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {ngo.name}
-                    </h3>
-                    <span className="text-xs text-secondary flex items-center gap-1">
-                      <FiMapPin /> {ngo.location}
-                    </span>
+        <>
+          <div className="responsive-grid-cards">
+            {paginatedNgos.map(ngo => (
+              <div key={ngo._id} className="glass-card flex-col">
+                <img src={ngo.coverImage} alt={ngo.name} className="card-img-top" />
+                <div className="card-body flex-col flex-1" style={{ position: 'relative' }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src={ngo.logo} alt="" className="ngo-mini-logo" style={{ border: '2px solid var(--accent)' }} />
+                    <div>
+                      <h3 className="text-lg font-bold" style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {ngo.name}
+                      </h3>
+                      <span className="text-xs text-secondary flex items-center gap-1">
+                        <FiMapPin /> {ngo.location}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-secondary line-clamp-3 mb-6">{ngo.description}</p>
+                  <div className="mt-auto">
+                    <Link to={`/ngos/${ngo._id}`} className="btn btn-primary w-full text-center">
+                      Visit Profile
+                    </Link>
                   </div>
                 </div>
-                <p className="text-sm text-secondary line-clamp-3 mb-6">{ngo.description}</p>
-                <div className="mt-auto">
-                  <Link to={`/ngos/${ngo._id}`} className="btn btn-primary w-full text-center">
-                    Visit Profile
-                  </Link>
-                </div>
               </div>
-            </div>
-          ))}
-          {ngos.length === 0 && (
-            <div className="text-center py-12 text-secondary" style={{ gridColumn: '1 / -1' }}>
-              No partner NGOs match your current search details.
+            ))}
+            {paginatedNgos.length === 0 && (
+              <div className="text-center py-12 text-secondary" style={{ gridColumn: '1 / -1' }}>
+                No partner NGOs match your current search details.
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-12 gap-2 flex-wrap">
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button 
+                  key={i} 
+                  className={`btn btn-sm ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`} 
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

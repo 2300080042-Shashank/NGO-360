@@ -11,6 +11,8 @@ const BrowseCampaigns = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const fetchCampaigns = async () => {
     setLoading(true);
@@ -21,6 +23,7 @@ const BrowseCampaigns = () => {
 
       const res = await axios.get(url);
       setCampaigns(res.data);
+      setCurrentPage(1);
     } catch (err) {
       console.error('Error fetching campaigns', err);
     } finally {
@@ -33,6 +36,8 @@ const BrowseCampaigns = () => {
   }, [search, category]);
 
   const categories = ['Education', 'Healthcare', 'Environment', 'Disaster Relief', 'Animals', 'Hunger Relief', 'Others'];
+  const totalPages = Math.ceil(campaigns.length / itemsPerPage);
+  const paginatedCampaigns = campaigns.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="animate-fade-in" style={{ padding: '40px 24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
@@ -77,43 +82,74 @@ const BrowseCampaigns = () => {
       {loading ? (
         <div className="text-center py-12 text-secondary">Loading campaigns...</div>
       ) : (
-        <div className="responsive-grid-cards">
-          {campaigns.map(camp => {
-            const pct = Math.min(100, Math.round((camp.amountRaised / camp.goalAmount) * 100));
-            return (
-              <div key={camp._id} className="glass-card flex-col">
-                <img src={camp.image} alt={camp.title} className="card-img-top" />
-                <span className="badge badge-accent category-badge">{camp.category}</span>
-                <div className="card-body flex-1 flex-col mt-4">
-                  <h3 className="text-lg font-bold mb-2 text-truncate">{camp.title}</h3>
-                  <p className="text-sm text-secondary line-clamp-3 mb-4">{camp.description}</p>
-                  
-                  <div className="mt-auto">
-                    <div className="flex justify-between text-xs font-semibold mb-1">
-                      <span>Raised: ₹{camp.amountRaised.toLocaleString()}</span>
-                      <span>{pct}%</span>
+        <>
+          <div className="responsive-grid-cards">
+            {paginatedCampaigns.map(camp => {
+              const pct = Math.min(100, Math.round((camp.amountRaised / camp.goalAmount) * 100));
+              return (
+                <div key={camp._id} className="glass-card flex-col">
+                  <img src={camp.image} alt={camp.title} className="card-img-top" />
+                  <span className="badge badge-accent category-badge">{camp.category}</span>
+                  <div className="card-body flex-1 flex-col mt-4">
+                    <h3 className="text-lg font-bold mb-2 text-truncate">{camp.title}</h3>
+                    <p className="text-sm text-secondary line-clamp-3 mb-4">{camp.description}</p>
+                    
+                    <div className="mt-auto">
+                      <div className="flex justify-between text-xs font-semibold mb-1">
+                        <span>Raised: ₹{camp.amountRaised.toLocaleString()}</span>
+                        <span>{pct}%</span>
+                      </div>
+                      <div className="progress-bar-container">
+                        <div className="progress-bar-fill" style={{ width: `${pct}%` }}></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-secondary mb-4">
+                        <span>Goal: ₹{camp.goalAmount.toLocaleString()}</span>
+                        {camp.organizationId && <span className="ngo-tag">by {camp.organizationId.name}</span>}
+                      </div>
+                      <Link to={`/campaigns/${camp._id}`} className="btn btn-primary w-full text-center">
+                        Donate Now
+                      </Link>
                     </div>
-                    <div className="progress-bar-container">
-                      <div className="progress-bar-fill" style={{ width: `${pct}%` }}></div>
-                    </div>
-                    <div className="flex justify-between text-xs text-secondary mb-4">
-                      <span>Goal: ₹{camp.goalAmount.toLocaleString()}</span>
-                      {camp.organizationId && <span className="ngo-tag">by {camp.organizationId.name}</span>}
-                    </div>
-                    <Link to={`/campaigns/${camp._id}`} className="btn btn-primary w-full text-center">
-                      Donate Now
-                    </Link>
                   </div>
                 </div>
+              );
+            })}
+            {paginatedCampaigns.length === 0 && (
+              <div className="text-center py-12 text-secondary" style={{ gridColumn: '1 / -1' }}>
+                No fundraising campaigns match your search.
               </div>
-            );
-          })}
-          {campaigns.length === 0 && (
-            <div className="text-center py-12 text-secondary" style={{ gridColumn: '1 / -1' }}>
-              No fundraising campaigns match your search.
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-12 gap-2 flex-wrap">
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button 
+                  key={i} 
+                  className={`btn btn-sm ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`} 
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

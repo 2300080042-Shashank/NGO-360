@@ -37,6 +37,7 @@ app.use('/api/donations', require('./routes/donations'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/organizations', require('./routes/organizations'));
 app.use('/api/campaigns', require('./routes/campaigns'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

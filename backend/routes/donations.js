@@ -6,6 +6,7 @@ const Campaign = require('../models/Campaign');
 const auth = require('../middleware/auth');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const { createNotification } = require('../utils/notifications');
 
 const router = express.Router();
 
@@ -195,6 +196,41 @@ router.post('/razorpay-verify', auth, async (req, res) => {
           donation.campaignId,
           { $inc: { amountRaised: donation.amount } }
         );
+      }
+
+      // Trigger in-app notifications and simulated transactional email logs
+      try {
+        // 1. Notify the Donor (thanking them for the contribution)
+        await createNotification(
+          donation.donorId,
+          null,
+          'Donation Successful',
+          `Thank you for your generous contribution of ₹${donation.amount}! Your transaction has been completed successfully.`,
+          'success'
+        );
+
+        // 2. Notify the NGO Admin
+        if (donation.organizationId) {
+          const org = await Organization.findById(donation.organizationId);
+          if (org) {
+            const donorUser = await User.findById(donation.donorId);
+            const donorName = donorUser ? donorUser.name : 'Anonymous Donor';
+            let campaignTitle = '';
+            if (donation.campaignId) {
+              const campaign = await Campaign.findById(donation.campaignId);
+              campaignTitle = campaign ? ` for "${campaign.title}"` : '';
+            }
+            await createNotification(
+              org.createdBy,
+              donation.donorId,
+              'New Donation Received',
+              `${donorName} donated ₹${donation.amount}${campaignTitle} to your organization.`,
+              'success'
+            );
+          }
+        }
+      } catch (notifyErr) {
+        console.error('Error dispatching donation notifications', notifyErr);
       }
 
       res.json({ success: true, donation });

@@ -1,10 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiHeart, FiCheckSquare, FiLogOut, FiUser, FiX } from 'react-icons/fi';
+import { FiHome, FiUsers, FiHeart, FiCheckSquare, FiLogOut, FiUser, FiX, FiBell } from 'react-icons/fi';
+import axios from 'axios';
 import './Sidebar.css';
+
+const API = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://ngo-360.onrender.com';
 
 const Sidebar = ({ role, isOpen, onClose }) => {
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await axios.get(`${API}/api/notifications/unread-count`, {
+        headers: { 'x-auth-token': token }
+      });
+      setUnreadCount(res.data.count);
+    } catch (err) {
+      console.error('Error fetching unread count', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+
+    window.addEventListener('notificationsUpdated', fetchUnreadCount);
+    return () => {
+      window.removeEventListener('notificationsUpdated', fetchUnreadCount);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -49,6 +75,18 @@ const Sidebar = ({ role, isOpen, onClose }) => {
               </NavLink>
             </li>
           )}
+
+          <li>
+            <NavLink to="/notifications" onClick={handleLinkClick} className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'} style={{ position: 'relative' }}>
+              <FiBell /> 
+              <span className="nav-text">Notifications</span>
+              {unreadCount > 0 && (
+                <span className="unread-badge">
+                  {unreadCount}
+                </span>
+              )}
+            </NavLink>
+          </li>
 
           <li>
             <NavLink to="/profile" onClick={handleLinkClick} className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}>

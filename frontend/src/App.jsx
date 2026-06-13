@@ -9,6 +9,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import VolunteerManagement from './pages/VolunteerManagement';
 import DonationsPage from './pages/DonationsPage';
 import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
 
 // Import New Public Pages
 import LandingPage from './pages/LandingPage';
@@ -106,6 +107,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="profile" element={<Profile />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
 
         {/* Fallback route */}
