@@ -45,7 +45,7 @@ const BrowseNgos = () => {
       </header>
 
       {/* Filter Bar */}
-      <div className="glass-panel mb-8" style={{ padding: '16px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '16px' }}>
+      <div className="glass-panel mb-8 responsive-grid-2-col" style={{ padding: '16px', gridTemplateColumns: '1.5fr 1fr' }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <FiSearch style={{ position: 'absolute', left: '16px', color: 'var(--text-secondary)' }} />
           <input 
@@ -72,7 +72,7 @@ const BrowseNgos = () => {
       {loading ? (
         <div className="text-center py-12 text-secondary">Loading organizations list...</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
+        <div className="responsive-grid-cards">
           {ngos.map(ngo => (
             <div key={ngo._id} className="glass-card flex-col">
               <img src={ngo.coverImage} alt={ngo.name} className="card-img-top" />

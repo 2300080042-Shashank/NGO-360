@@ -157,7 +157,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Scoped Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        <div className="responsive-grid-stats mb-8">
           <div className="glass-card flex items-center gap-4 cursor-pointer" onClick={() => navigate('/donations')}>
             <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '12px', color: 'var(--success)' }}>
               <FiDollarSign size={24} />
@@ -223,7 +223,7 @@ const AdminDashboard = () => {
         {/* Campaign Creation Modal */}
         {showCampModal && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-            <div className="glass-panel" style={{ padding: '32px', width: '100%', maxWidth: '500px' }}>
+            <div className="glass-panel mobile-no-padding" style={{ padding: '32px', width: '90%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
               <h2 className="text-2xl font-bold mb-6">Launch New Campaign</h2>
               <form onSubmit={handleCreateCampaign} className="flex-col gap-4">
                 <div>
@@ -246,7 +246,7 @@ const AdminDashboard = () => {
                     required
                   ></textarea>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="responsive-grid-1-1" style={{ gap: '16px' }}>
                   <div>
                     <label className="text-sm font-semibold mb-2 block">Goal Amount (₹)</label>
                     <input 
@@ -300,7 +300,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '40px' }}>
+        <div className="responsive-grid-stats mb-8">
           <div className="glass-card flex items-center gap-6">
             <div style={{ padding: '16px', background: 'rgba(99, 102, 241, 0.12)', borderRadius: '12px', color: 'var(--accent)' }}>
               <FiCheckSquare size={28} />
@@ -337,7 +337,7 @@ const AdminDashboard = () => {
           <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
             <FiAward className="text-accent" /> Available Opportunities
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          <div className="responsive-grid-cards">
             {availableTasks.map(task => (
               <div key={task._id} className="glass-card flex-col" style={{ padding: '20px' }}>
                 <div className="card-body flex-1 flex-col">
@@ -438,7 +438,7 @@ const AdminDashboard = () => {
         </header>
 
         {/* Stats Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '40px' }}>
+        <div className="responsive-grid-stats mb-8">
           <div className="glass-card flex items-center gap-6 hover:scale-105 transition-transform cursor-pointer" onClick={() => navigate('/donations')}>
             <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '12px', color: 'var(--success)' }}>
               <FiDollarSign size={28} />
@@ -471,7 +471,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Split Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px' }}>
+        <div className="responsive-grid-2-col">
           
           {/* Left panel: Active Volunteer Events to check out */}
           <div className="glass-panel" style={{ padding: '24px' }}>

@@ -45,9 +45,9 @@ const NgoProfile = () => {
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '60px' }}>
       {/* Cover Image & Branding Header */}
-      <div style={{ position: 'relative', width: '100%', height: '350px', background: `url(${org.coverImage}) center/cover no-repeat` }}>
+      <div className="ngo-cover-banner" style={{ background: `url(${org.coverImage}) center/cover no-repeat` }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, rgba(11, 15, 25, 0.2), rgba(11, 15, 25, 0.9))' }}></div>
-        <div style={{ position: 'absolute', bottom: '-50px', left: '5%', display: 'flex', alignItems: 'flex-end', gap: '20px', zIndex: 10 }}>
+        <div className="ngo-branding-container">
           <img src={org.logo} alt="" style={{ width: '130px', height: '130px', borderRadius: '24px', border: '4px solid var(--bg-primary)', objectFit: 'cover', background: 'var(--bg-secondary)', boxShadow: 'var(--shadow-lg)' }} />
           <div style={{ paddingBottom: '16px' }}>
             <h1 className="text-4xl font-bold">{org.name}</h1>
@@ -57,7 +57,7 @@ const NgoProfile = () => {
       </div>
 
       {/* Profile Details Area */}
-      <div className="max-width-container" style={{ marginTop: '90px', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
+      <div className="ngo-details-grid max-width-container">
         
         {/* Left Side: Description, Mission, Campaigns */}
         <div className="flex-col gap-8">
@@ -80,7 +80,7 @@ const NgoProfile = () => {
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <FiHeart className="text-danger" /> Active Campaigns ({campaigns.length})
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+            <div className="responsive-grid-cards">
               {campaigns.map(camp => {
                 const pct = Math.min(100, Math.round((camp.amountRaised / camp.goalAmount) * 100));
                 return (
@@ -113,7 +113,7 @@ const NgoProfile = () => {
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
               <FiAward className="text-success" /> Volunteer Opportunities ({tasks.length})
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+            <div className="responsive-grid-cards">
               {tasks.map(task => (
                 <div key={task._id} className="glass-card flex-col">
                   <div className="card-body flex-1 flex-col">

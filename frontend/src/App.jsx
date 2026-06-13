@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { FiMenu } from 'react-icons/fi';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
@@ -36,10 +37,24 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 // Dashboard Layout (Dashboard Side Navigation)
 const DashboardLayout = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   return (
     <div className="app-container">
-      <Sidebar role={user.role} />
+      <div className="mobile-header">
+        <button className="hamburger-btn" onClick={() => setSidebarOpen(true)} aria-label="Open navigation sidebar">
+          <FiMenu size={24} />
+        </button>
+        <h2 className="logo-text" style={{ fontSize: '1.4rem', margin: 0 }}>NGO<span style={{ color: 'var(--accent)' }}>360</span></h2>
+        <div style={{ width: '40px' }}></div>
+      </div>
+
+      <Sidebar role={user.role} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
+      )}
+
       <main className="main-content">
         <Outlet />
       </main>

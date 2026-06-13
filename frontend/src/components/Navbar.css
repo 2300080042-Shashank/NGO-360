@@ -117,9 +117,67 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
+.navbar-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.navbar-mobile-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navbar-mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 20px;
+  right: 20px;
+  margin-top: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 999;
+}
+
+.navbar-mobile-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.navbar-mobile-menu a:hover,
+.navbar-mobile-menu a.active {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navbar-mobile-menu a.active {
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.08);
+}
+
 /* Mobile responsive menu */
 @media (max-width: 768px) {
   .navbar-links {
-    display: none; /* In production, we'd have a hamburger. Let's make it show icons or keep clean */
+    display: none !important;
+  }
+  .navbar-actions {
+    display: none !important;
+  }
+  .navbar-mobile-toggle {
+    display: flex;
   }
 }
+

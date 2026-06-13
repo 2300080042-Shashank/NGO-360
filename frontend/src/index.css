@@ -347,3 +347,226 @@ tr:hover td {
   font-weight: 600;
   color: var(--text-secondary);
 }
+
+/* Responsive Layout Utilities */
+.responsive-grid-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.responsive-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.responsive-grid-2-col {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+}
+
+.responsive-grid-1-1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* Tablet viewport rules */
+@media (max-width: 1024px) {
+  .responsive-grid-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .responsive-grid-2-col {
+    grid-template-columns: 1fr !important;
+  }
+  .responsive-grid-1-1 {
+    grid-template-columns: 1fr !important;
+  }
+  .responsive-grid-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Mobile viewport rules */
+@media (max-width: 768px) {
+  .responsive-grid-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .responsive-grid-cards {
+    grid-template-columns: 1fr !important;
+  }
+  .flex-mobile-col {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+  .flex-mobile-wrap {
+    flex-wrap: wrap !important;
+  }
+  .mobile-w-full {
+    width: 100% !important;
+  }
+  .mobile-no-padding {
+    padding: 12px !important;
+  }
+}
+
+/* Base resets for mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Ensure images don't overflow */
+img {
+  max-width: 100%;
+}
+
+/* Mobile Header & Overlay Styles */
+.mobile-header {
+  display: none;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(11, 15, 25, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeInOverlay 0.2s ease-out forwards;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: rgba(17, 24, 39, 0.95);
+    border-bottom: 1px solid var(--glass-border);
+    height: 64px;
+    z-index: 999;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+
+  .hamburger-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .main-content {
+    padding: 20px !important;
+    overflow-y: auto;
+    flex: 1;
+    width: 100%;
+  }
+}
+
+/* NGO Profile Responsive Layout Rules */
+.ngo-cover-banner {
+  position: relative;
+  width: 100%;
+  height: 350px;
+}
+
+.ngo-branding-container {
+  position: absolute;
+  bottom: -50px;
+  left: 5%;
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  z-index: 10;
+}
+
+.ngo-details-grid {
+  margin-top: 90px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 768px) {
+  .ngo-cover-banner {
+    height: 220px !important;
+  }
+  
+  .ngo-branding-container {
+    position: relative !important;
+    bottom: unset !important;
+    left: unset !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    margin-top: -65px !important;
+    gap: 12px !important;
+    padding: 0 16px !important;
+  }
+  
+  .ngo-branding-container div {
+    padding-bottom: 0 !important;
+  }
+
+  .ngo-branding-container h1 {
+    font-size: 2.2rem !important;
+  }
+  
+  .ngo-branding-container p {
+    justify-content: center !important;
+  }
+  
+  .ngo-details-grid {
+    margin-top: 40px !important;
+    grid-template-columns: 1fr !important;
+    padding: 0 20px !important;
+  }
+}
+
+/* Campaign details responsive image styling */
+.campaign-detail-img {
+  width: 100%;
+  height: 380px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+}
+
+@media (max-width: 768px) {
+  .campaign-detail-img {
+    height: 220px !important;
+  }
+}
+
+
+
+

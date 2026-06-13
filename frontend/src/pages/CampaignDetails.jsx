@@ -141,11 +141,11 @@ const CampaignDetails = () => {
         <FiArrowLeft /> Back to Campaigns
       </Link>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '32px' }}>
+      <div className="responsive-grid-2-col" style={{ gap: '32px' }}>
         
         {/* Left column: Image, description, NGO reference */}
         <div className="flex-col gap-6">
-          <img src={campaign.image} alt={campaign.title} style={{ width: '100%', height: '380px', objectFit: 'cover', borderRadius: '16px', border: '1px solid var(--glass-border)' }} />
+          <img src={campaign.image} alt={campaign.title} className="campaign-detail-img" />
           
           <div className="glass-panel" style={{ padding: '32px' }}>
             <div className="flex items-center gap-2 mb-2">

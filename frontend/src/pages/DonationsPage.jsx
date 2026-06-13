@@ -176,7 +176,7 @@ const DonationsPage = () => {
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: user.role === 'donor' ? '1.1fr 1.9fr' : '1fr', gap: '24px' }}>
+      <div className={user.role === 'donor' ? "responsive-grid-2-col" : ""}>
         
         {/* Donation Form (Donors only) */}
         {user.role === 'donor' && (
@@ -270,17 +270,13 @@ const DonationsPage = () => {
           <h3 className="text-xl font-bold mb-6">Recent Transactions</h3>
           
           {/* Donations Filter Bar */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
-            gap: '12px', 
-            marginBottom: '24px',
+          <div className="flex flex-mobile-col gap-4 mb-6" style={{ 
             background: 'rgba(255,255,255,0.01)', 
             padding: '16px', 
             borderRadius: '12px', 
             border: '1px solid var(--glass-border)'
           }}>
-            <div style={{ gridColumn: 'span 2' }}>
+            <div style={{ flex: 2 }} className="mobile-w-full">
               <label className="text-xs text-secondary mb-1 block">Search Project/Donor</label>
               <input 
                 type="text" 
@@ -290,7 +286,7 @@ const DonationsPage = () => {
                 style={{ padding: '8px 12px', fontSize: '13px' }}
               />
             </div>
-            <div>
+            <div style={{ flex: 1 }} className="mobile-w-full">
               <label className="text-xs text-secondary mb-1 block">Min Amount (₹)</label>
               <input 
                 type="number" 
@@ -300,7 +296,7 @@ const DonationsPage = () => {
                 style={{ padding: '8px 12px', fontSize: '13px' }}
               />
             </div>
-            <div>
+            <div style={{ flex: 1 }} className="mobile-w-full">
               <label className="text-xs text-secondary mb-1 block">Max Amount (₹)</label>
               <input 
                 type="number" 

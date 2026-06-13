@@ -140,14 +140,14 @@ const VolunteerManagement = () => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: user.role === 'admin' ? '2fr 1fr' : '1fr', gap: '24px' }}>
+      <div className={user.role === 'admin' ? "responsive-grid-2-col" : ""}>
         
         {/* Task List */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <h3 className="text-xl font-bold mb-6">{user.role === 'admin' ? 'Published Opportunities' : 'My Tasks'}</h3>
           
           {/* Tasks Filter Bar */}
-          <div className="flex gap-4 mb-6" style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+          <div className="flex flex-mobile-col gap-4 mb-6" style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
             <input 
               type="text" 
               placeholder="Search by title..." 
@@ -169,8 +169,8 @@ const VolunteerManagement = () => {
 
           <div className="flex-col gap-4">
             {tasks.map(task => (
-              <div key={task._id} className="glass-card flex justify-between items-center" style={{ padding: '20px 24px' }}>
-                <div style={{ flex: 1, marginRight: '16px' }}>
+              <div key={task._id} className="glass-card flex flex-mobile-col justify-between items-center gap-4" style={{ padding: '20px 24px' }}>
+                <div className="mobile-w-full" style={{ flex: 1 }}>
                   <h4 className="font-semibold text-lg">{task.title}</h4>
                   <p className="text-sm text-secondary mt-1">{task.description}</p>
                   
@@ -197,11 +197,12 @@ const VolunteerManagement = () => {
                   )}
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-mobile-wrap items-center gap-4 mobile-w-full justify-between">
                   <select 
                     value={task.status} 
                     onChange={(e) => updateTaskStatus(task._id, e.target.value)}
                     style={{ background: 'rgba(0,0,0,0.25)', width: 'auto', padding: '6px 12px' }}
+                    className="mobile-w-full"
                   >
                     <option value="Pending">Pending</option>
                     <option value="In-progress">In-progress</option>
@@ -276,7 +277,7 @@ const VolunteerManagement = () => {
       {/* Task Creation Modal */}
       {showTaskModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="glass-panel" style={{ padding: '32px', width: '100%', maxWidth: '500px' }}>
+          <div className="glass-panel mobile-no-padding" style={{ padding: '32px', width: '90%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 className="text-2xl font-bold mb-6">Publish Volunteer Opportunity</h2>
             <form onSubmit={handleCreateTask} className="flex-col gap-4">
               <div>
@@ -289,7 +290,7 @@ const VolunteerManagement = () => {
                 <textarea rows="3" placeholder="Describe the tasks, shifts, expectations..." value={newTask.description} onChange={e => setNewTask({...newTask, description: e.target.value})} required></textarea>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="responsive-grid-1-1" style={{ gap: '16px' }}>
                 <div>
                   <label className="text-sm font-semibold mb-2 block">Location</label>
                   <input type="text" placeholder="e.g. Connaught Place, Delhi" value={newTask.location} onChange={e => setNewTask({...newTask, location: e.target.value})} required />
@@ -300,7 +301,7 @@ const VolunteerManagement = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="responsive-grid-1-1" style={{ gap: '16px' }}>
                 <div>
                   <label className="text-sm font-semibold mb-2 block">Volunteers Needed</label>
                   <input type="number" min="1" value={newTask.requiredVolunteers} onChange={e => setNewTask({...newTask, requiredVolunteers: e.target.value})} required />

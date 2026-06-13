@@ -213,7 +213,7 @@ const Profile = () => {
         <p className="text-secondary mt-2">Manage your credentials, preferences, and organization listings.</p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: user.role === 'admin' ? '1fr 1fr' : '1.2fr 0.8fr', gap: '24px' }}>
+      <div className="responsive-grid-2-col" style={{ gridTemplateColumns: user.role === 'admin' ? '1fr 1fr' : '1.2fr 0.8fr' }}>
         
         {/* Left Side: General Profile Details */}
         <div className="flex-col gap-6">
@@ -270,7 +270,7 @@ const Profile = () => {
               {profile.role === 'volunteer' && (
                 <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', marginTop: '8px' }}>
                   <h4 className="text-sm font-semibold mb-4 text-accent">Volunteer Customizations</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="responsive-grid-1-1" style={{ gap: '16px' }}>
                     <div>
                       <label className="text-xs text-secondary font-semibold mb-2 block">Skills (Comma-separated)</label>
                       <input 
@@ -390,7 +390,7 @@ const Profile = () => {
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="responsive-grid-1-1" style={{ gap: '16px' }}>
                     <div>
                       <label className="text-xs text-secondary font-semibold mb-2 block">Logo URL</label>
                       <input 
@@ -445,7 +445,7 @@ const Profile = () => {
 
                   <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px', marginTop: '8px' }}>
                     <h4 className="text-sm font-semibold mb-4 text-accent">NGO Contact Info</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="responsive-grid-1-1" style={{ gap: '16px' }}>
                       <div>
                         <label className="text-xs text-secondary font-semibold mb-2 block">Contact Email</label>
                         <input 
